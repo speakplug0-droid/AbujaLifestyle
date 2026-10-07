@@ -6,299 +6,89 @@
 <title>AbujaLifestyle</title>
 <link rel="stylesheet" href="/style.css">
 <script type="importmap">
-{
-  "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-  }
-}
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
 </script>
 </head>
 <body>
 <div id="game">
 <div id="playerDebug" style="position:fixed;left:10px;top:58px;z-index:99999;background:rgba(0,0,0,.88);color:#fff;padding:8px 12px;border:2px solid #ffcc00;border-radius:8px;font:700 13px Arial;max-width:320px">PLAYER: STARTING…</div>
-  <canvas id="scene"></canvas>
-  <div class="hud brand">Abuja<span>Life</span><b>style 🇳🇬</b><i class="status">ONLINE ●</i></div>
-  <div class="hud topnav">
-    <button data-panel="map">🗺 Map</button><button data-panel="cars">🚘 Cars</button><button data-panel="properties">🏠 Properties</button><button data-panel="jobs">💼 Jobs</button><button data-panel="store">🛒 Store</button><button data-panel="settings">⚙ Settings</button>
-  </div>
-  <div class="money"><strong>₦1,250,000</strong><small>ID: <span id="playerId">Player001</span></small></div>
-  <div class="minimap"><div class="player-dot"></div></div>
-  <div class="controls">
-    <div class="joystick" id="joystick"><div class="stick" id="stick"></div></div>
-    <div class="actions"><button id="run">🏃</button><button id="car">🚘</button></div>
-  </div>
-  <button class="phone-open" id="phoneOpen" aria-label="Open phone">📱</button>
-  <div class="phone" id="phone">
-    <div class="phone-shell">
-      <div class="phone-head"><span>4:29 PM · 4G</span><button class="phone-close" id="phoneClose">✕ Close</button></div>
-      <div class="apps">
-        <button class="app"><div class="icon">💼</div>Jobs</button>
-        <button class="app"><div class="icon">💬</div>Messages</button>
-        <button class="app"><div class="icon">🏦</div>Bank</button>
-        <button class="app"><div class="icon">🚕</div>Ride</button>
-        <button class="app"><div class="icon">🏠</div>Houses</button>
-        <button class="app"><div class="icon">🚗</div>Cars</button>
-        <button class="app"><div class="icon">🛍️</div>Shops</button>
-        <button class="app"><div class="icon">📰</div>News</button>
-        <button class="app"><div class="icon">🏛️</div>Abuja Gov</button>
-        <button class="app"><div class="icon">👮</div>Police</button>
-        <button class="app"><div class="icon">🕵️</div>EFCC</button>
-        <button class="app"><div class="icon">🕵️</div>Federal</button>
-        <button class="app"><div class="icon">🪖</div>Army</button>
-        <button class="app"><div class="icon">🏴</div>Bandits</button>
-        <button class="app"><div class="icon">🕴️</div>Club/Gang</button>
-        <button class="app"><div class="icon">🌐</div>Internet</button>
-        <button class="app"><div class="icon">📞</div>Contacts</button>
-        <button class="app"><div class="icon">⚙️</div>Settings</button>
-      </div>
-    </div>
-  </div>
-  <div class="rotate">🔄 Rotate your phone<small>AbujaLifestyle is designed for landscape gameplay.</small></div>
+<canvas id="scene"></canvas>
+<div class="hud brand">Abuja<span>Life</span><b>style 🇳🇬</b><i class="status">ONLINE ●</i></div>
+<div class="hud topnav"><button>🗺 Map</button><button>🚘 Cars</button><button>🏠 Properties</button><button>💼 Jobs</button><button>🛒 Store</button><button>⚙ Settings</button></div>
+<div class="money"><strong>₦1,250,000</strong><small>ID: <span id="playerId">Player001</span></small></div>
+<div class="minimap"><div class="player-dot"></div></div>
+<div class="controls"><div class="joystick" id="joystick"><div class="stick" id="stick"></div></div><div class="actions"><button id="run">🏃</button><button id="car">🚘</button></div></div>
+<button class="phone-open" id="phoneOpen">📱</button>
+<div class="phone" id="phone"><div class="phone-shell"><div class="phone-head"><span>4:29 PM · 4G</span><button class="phone-close" id="phoneClose">✕ Close</button></div><div class="apps">
+<button class="app">💼 Jobs</button><button class="app">💬 Messages</button><button class="app">🏦 Bank</button><button class="app">🚕 Ride</button><button class="app">🏠 Houses</button><button class="app">🚗 Cars</button><button class="app">🛍️ Shops</button><button class="app">📰 News</button><button class="app">🏛️ Abuja Gov</button><button class="app">👮 Police</button><button class="app">🕵️ EFCC</button><button class="app">🕵️ Federal</button><button class="app">🪖 Army</button><button class="app">🏴 Bandits</button><button class="app">🕴️ Club/Gang</button><button class="app">🌐 Internet</button><button class="app">📞 Contacts</button><button class="app">⚙️ Settings</button>
+</div></div></div>
+<div class="rotate">🔄 Rotate your phone<small>AbujaLifestyle is designed for landscape gameplay.</small></div>
 </div>
 <script type="module">
 import * as THREE from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";
+
 const debug=document.getElementById("playerDebug");
-const setDebug=(text,bad=false)=>{debug.textContent="PLAYER: "+text;debug.style.borderColor=bad?"#ff4444":"#55ff55";debug.style.color=bad?"#ff7777":"#ffffff";};
-window.addEventListener("error",e=>setDebug("JAVASCRIPT ERROR — "+(e.message||"unknown"),true));
-window.addEventListener("unhandledrejection",e=>setDebug("ERROR — "+(e.reason?.message||e.reason||"unknown"),true));
+const setDebug=(t,b=false)=>{debug.textContent="PLAYER: "+t;debug.style.borderColor=b?"#ff4444":"#55ff55";debug.style.color=b?"#ff7777":"#fff"};
+addEventListener("error",e=>setDebug("JAVASCRIPT ERROR — "+(e.message||"unknown"),true));
+addEventListener("unhandledrejection",e=>setDebug("ERROR — "+(e.reason?.message||e.reason||"unknown"),true));
+
 const canvas=document.getElementById("scene");
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);
 renderer.shadowMap.enabled=true;
-renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-
-const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x8fc9ef);
-scene.fog=new THREE.Fog(0x8fc9ef,70,260);
-
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x8fc9ef);scene.fog=new THREE.Fog(0x8fc9ef,70,260);
 const camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.1,500);
-camera.position.set(0,5,9);
-
 scene.add(new THREE.HemisphereLight(0xcfe9ff,0x4b3d2b,1.8));
-const sun=new THREE.DirectionalLight(0xffffff,2.2);
-sun.position.set(-40,70,35);sun.castShadow=true;scene.add(sun);
-
-const mat=(c)=>new THREE.MeshStandardMaterial({color:c,roughness:.8});
-const ground=new THREE.Mesh(new THREE.PlaneGeometry(500,500),mat(0x477b43));
-ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
-
-function road(x,z,w,d){
-  const m=new THREE.Mesh(new THREE.BoxGeometry(w,.08,d),mat(0x24272b));
-  m.position.set(x,.04,z);scene.add(m);
-}
+const sun=new THREE.DirectionalLight(0xffffff,2.2);sun.position.set(-40,70,35);sun.castShadow=true;scene.add(sun);
+const mat=c=>new THREE.MeshStandardMaterial({color:c,roughness:.8});
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(500,500),mat(0x477b43));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+function road(x,z,w,d){const m=new THREE.Mesh(new THREE.BoxGeometry(w,.08,d),mat(0x24272b));m.position.set(x,.04,z);scene.add(m)}
 road(0,0,16,420);road(0,0,420,16);
-
-function building(x,z,w,h,d,c=0x9a9c94){
-  const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));
-  b.position.set(x,h/2,z);b.castShadow=true;b.receiveShadow=true;scene.add(b);
-  for(let y=4;y<h-1;y+=4){
-    for(let xx=-w/2+2;xx<w/2-1;xx+=4){
-      const win=new THREE.Mesh(new THREE.BoxGeometry(1.4,.8,.05),new THREE.MeshStandardMaterial({color:0x274d65,roughness:.3,metalness:.2}));
-      win.position.set(x+xx,y,z-d/2-.03);scene.add(win);
-    }
-  }
-}
+function building(x,z,w,h,d,c=0x9a9c94){const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));b.position.set(x,h/2,z);b.castShadow=true;b.receiveShadow=true;scene.add(b);for(let y=4;y<h-1;y+=4)for(let xx=-w/2+2;xx<w/2-1;xx+=4){const win=new THREE.Mesh(new THREE.BoxGeometry(1.4,.8,.05),new THREE.MeshStandardMaterial({color:0x274d65,roughness:.3,metalness:.2}));win.position.set(x+xx,y,z-d/2-.03);scene.add(win)}}
 building(-24,-22,18,24,18,0xaaa89e);building(27,-35,22,38,20,0x777d83);building(-28,32,20,30,22,0x8c938e);building(28,45,26,48,24,0x9c9689);
+for(let i=0;i<22;i++){const z=-100+i*10;const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.35,.45,3),mat(0x70462e));trunk.position.set(-12,1.5,z);scene.add(trunk);const crown=new THREE.Mesh(new THREE.SphereGeometry(2.2,16,12),mat(0x1f7d3d));crown.position.set(-12,4,z);crown.castShadow=true;scene.add(crown)}
 
-for(let i=0;i<22;i++){
-  const z=-100+i*10;
-  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.35,.45,3),mat(0x70462e));trunk.position.set(-12,1.5,z);scene.add(trunk);
-  const crown=new THREE.Mesh(new THREE.SphereGeometry(2.2,16,12),mat(0x1f7d3d));crown.position.set(-12,4,z);crown.castShadow=true;scene.add(crown);
-}
-
-const player=new THREE.Group();player.position.set(0,0,0);scene.add(player);
-let playerModel=null;
-let playerReady=false;
-let walkTime=0;
-let walkAmount=0;
-
-{
-  const manager = new THREE.LoadingManager();
-
-  manager.setURLModifier((url) => {
-    if (url.includes("raw.githubusercontent.com")) return url;
-    return url;
-  });
-
-  manager.onStart = () => console.log("AbujaLifestyle: player loading started");
-  manager.onLoad = () => console.log("AbujaLifestyle: player assets loaded");
-  manager.onError = (url) => console.error("AbujaLifestyle: asset failed:", url);
-
-  const loader = new GLTFLoader(manager);
-  setDebug("LOADING character.glb…");
-
-  loader.load(
-    "https://raw.githubusercontent.com/programasweights/avatar/main/public/assets/character.glb",
-    (gltf) => {
-      playerModel = gltf.scene;
-
-      const box = new THREE.Box3().setFromObject(playerModel);
-      const size = box.getSize(new THREE.Vector3());
-
-      if (size.y > 0) {
-        playerModel.scale.setScalar(5.2);
-      }
-
-      playerModel.updateMatrixWorld(true);
-
-      const scaledBox = new THREE.Box3().setFromObject(playerModel);
-      const center = scaledBox.getCenter(new THREE.Vector3());
-
-      playerModel.position.x -= center.x;
-      playerModel.position.z -= center.z;
-      playerModel.position.y -= scaledBox.min.y;
-      playerModel.position.y += 0.03;
-
-      playerModel.traverse((o) => {
-        if (o.isMesh) {
-          o.visible = true;
-          o.castShadow = true;
-          o.frustumCulled = false;
-          o.receiveShadow = true;
-          if (o.isSkinnedMesh) {
-            o.normalizeSkinWeights();
-            o.pose();
-            o.computeBoundingSphere();
-          }
-
-          if (o.material) {
-            const materials = Array.isArray(o.material) ? o.material : [o.material];
-            for (const material of materials) {
-              material.side = THREE.DoubleSide;
-              material.transparent = false;
-              material.opacity = 1;
-              material.depthWrite = true;
-              material.needsUpdate = true;
-            }
-          }
-        }
-      });
-
-      player.add(playerModel);
-      playerModel.visible = true;
-      player.updateMatrixWorld(true);
-      playerModel.updateMatrixWorld(true);
-      playerReady = true;
-      setDebug("LOADED ✓ MODEL VISIBLE TEST");
-
-      console.log(
-        "AbujaLifestyle: REAL PLAYER LOADED",
-        "height:", size.y,
-        "children:", playerModel.children.length
-      );
-    },
-    (progress) => {
-      if (progress.total) {
-        setDebug("LOADING character.glb… " + Math.round((progress.loaded / progress.total) * 100) + "%");
-        console.log(
-          "AbujaLifestyle: player loading",
-          Math.round((progress.loaded / progress.total) * 100) + "%"
-        );
-      }
-    },
-    (error) => {
-      console.error("AbujaLifestyle: PLAYER MODEL ERROR", error);
-      setDebug("MODEL ERROR — " + (error?.message || "check character.glb"), true);
+const player=new THREE.Group();scene.add(player);
+let playerModel=null,playerReady=false,walkTime=0,walkAmount=0;
+const loader=new GLTFLoader();setDebug("LOADING REAL PLAYER…");
+loader.load("https://raw.githubusercontent.com/programasweights/avatar/main/public/assets/character.glb",gltf=>{
+  playerModel=gltf.scene;
+  const originalBox=new THREE.Box3().setFromObject(playerModel),originalSize=originalBox.getSize(new THREE.Vector3());
+  playerModel.scale.setScalar(5.2);playerModel.updateMatrixWorld(true);
+  const box=new THREE.Box3().setFromObject(playerModel),center=box.getCenter(new THREE.Vector3());
+  playerModel.position.x-=center.x;playerModel.position.z-=center.z;playerModel.position.y-=box.min.y+0.03;
+  playerModel.traverse(o=>{
+    o.visible=true;
+    if(!o.isMesh)return;
+    o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;o.renderOrder=50;
+    const ms=Array.isArray(o.material)?o.material:[o.material];
+    for(const m of ms){
+      m.side=THREE.DoubleSide;m.transparent=false;m.opacity=1;m.depthWrite=true;m.depthTest=true;m.needsUpdate=true;
+      if(m.color)m.color.set(0x55a86a);
+      if(m.emissive){m.emissive.set(0x163b20);m.emissiveIntensity=.35}
     }
-  );
-}
+    if(o.isSkinnedMesh){o.normalizeSkinWeights();o.pose();o.computeBoundingSphere()}
+  });
+  player.add(playerModel);player.position.set(0,0,0);player.updateMatrixWorld(true);playerModel.updateMatrixWorld(true);
+  playerReady=true;setDebug("LOADED ✓ REAL PLAYER");
+  console.log("PLAYER HEIGHT",originalSize.y,"SCALED HEIGHT",box.max.y-box.min.y);
+},undefined,error=>{console.error(error);setDebug("MODEL ERROR — "+(error?.message||"unknown"),true)});
 
-const keys={};
-addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
-addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
-
-let joyX=0,joyY=0,dragging=false;
-const joy=document.getElementById("joystick"),stick=document.getElementById("stick");
-function joyMove(e){
-  if(!dragging)return;
-  const r=joy.getBoundingClientRect(),p=e.touches?e.touches[0]:e;
-  joyX=Math.max(-1,Math.min(1,(p.clientX-(r.left+r.width/2))/(r.width*.38)));
-  joyY=Math.max(-1,Math.min(1,(p.clientY-(r.top+r.height/2))/(r.height*.38)));
-  stick.style.transform="translate("+joyX*35+"px,"+joyY*35+"px)";
-}
-joy.addEventListener("pointerdown",e=>{dragging=true;joy.setPointerCapture(e.pointerId);joyMove(e)});
-joy.addEventListener("pointermove",joyMove);
-joy.addEventListener("pointerup",()=>{dragging=false;joyX=joyY=0;stick.style.transform=""});
-
-let yaw=0,pitch=.20;
-let lastX=0,lastY=0,look=false;
-canvas.addEventListener("pointerdown",e=>{look=true;lastX=e.clientX;lastY=e.clientY});
-canvas.addEventListener("pointermove",e=>{
-  if(!look)return;
-  yaw-=(e.clientX-lastX)*.008;
-  pitch=Math.max(.05,Math.min(.55,pitch+(e.clientY-lastY)*.005));
-  lastX=e.clientX;lastY=e.clientY;
-});
-canvas.addEventListener("pointerup",()=>look=false);
-canvas.addEventListener("pointercancel",()=>look=false);
-
-function move(){
-  let x=joyX,y=joyY;
-  if(keys.w)y=-1;
-  if(keys.s)y=1;
-  if(keys.a)x=-1;
-  if(keys.d)x=1;
-  const input=new THREE.Vector2(x,y);
-  if(input.length()>1) input.normalize();
-  const speed=.13;
-  const forward=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw));
-  const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
-  player.position.addScaledVector(forward,-input.y*speed);
-  player.position.addScaledVector(right,input.x*speed);
-  const moving=input.length()>.05;
-  walkAmount=THREE.MathUtils.lerp(walkAmount,moving?1:0,.18);
-  if(moving){
-    player.rotation.y=Math.atan2(input.x,-input.y)+yaw;
-    walkTime+=.22;
-  }
-}
-function animatePlayer(){
-  if(!playerReady||!playerModel)return;
-  const bones={};
-  playerModel.traverse(o=>{if(o.isBone) bones[o.name]=o;});
-  const swing=Math.sin(walkTime)*.65*walkAmount;
-  const armSwing=Math.sin(walkTime)*.42*walkAmount;
-  if(bones.thigh_l) bones.thigh_l.rotation.x=swing;
-  if(bones.thigh_r) bones.thigh_r.rotation.x=-swing;
-  if(bones.calf_l) bones.calf_l.rotation.x=-Math.max(0,-swing)*.55;
-  if(bones.calf_r) bones.calf_r.rotation.x=-Math.max(0,swing)*.55;
-  if(bones.upperarm_l) bones.upperarm_l.rotation.z=-armSwing;
-  if(bones.upperarm_r) bones.upperarm_r.rotation.z=armSwing;
-  if(bones.lowerarm_l) bones.lowerarm_l.rotation.z=armSwing*.35;
-  if(bones.lowerarm_r) bones.lowerarm_r.rotation.z=-armSwing*.35;
-}
-function cameraFollow(){
-  const dist=6.2;
-  const height=2.55+pitch*1.8;
-  const cameraX=player.position.x+Math.sin(yaw)*dist;
-  const cameraZ=player.position.z+Math.cos(yaw)*dist;
-  camera.position.set(cameraX,player.position.y+height,cameraZ);
-  const target=player.position.clone();
-  target.y+=1.18;
-  camera.lookAt(target);
-}
-function loop(){
-  move();animatePlayer();cameraFollow();renderer.render(scene,camera);requestAnimationFrame(loop);
-}
-loop();
-
+const keys={};addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+let joyX=0,joyY=0,dragging=false;const joy=document.getElementById("joystick"),stick=document.getElementById("stick");
+function joyMove(e){if(!dragging)return;const r=joy.getBoundingClientRect(),p=e.touches?e.touches[0]:e;joyX=Math.max(-1,Math.min(1,(p.clientX-(r.left+r.width/2))/(r.width*.38)));joyY=Math.max(-1,Math.min(1,(p.clientY-(r.top+r.height/2))/(r.height*.38)));stick.style.transform="translate("+joyX*35+"px,"+joyY*35+"px)"}
+joy.addEventListener("pointerdown",e=>{dragging=true;joy.setPointerCapture(e.pointerId);joyMove(e)});joy.addEventListener("pointermove",joyMove);joy.addEventListener("pointerup",()=>{dragging=false;joyX=joyY=0;stick.style.transform=""});
+let yaw=0,pitch=.20,lastX=0,lastY=0,look=false;
+canvas.addEventListener("pointerdown",e=>{look=true;lastX=e.clientX;lastY=e.clientY});canvas.addEventListener("pointermove",e=>{if(!look)return;yaw-=(e.clientX-lastX)*.008;pitch=Math.max(.05,Math.min(.55,pitch+(e.clientY-lastY)*.005));lastX=e.clientX;lastY=e.clientY});canvas.addEventListener("pointerup",()=>look=false);canvas.addEventListener("pointercancel",()=>look=false);
+function move(){let x=joyX,y=joyY;if(keys.w)y=-1;if(keys.s)y=1;if(keys.a)x=-1;if(keys.d)x=1;const input=new THREE.Vector2(x,y);if(input.length()>1)input.normalize();const speed=.13;const forward=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw));const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));player.position.addScaledVector(forward,-input.y*speed);player.position.addScaledVector(right,input.x*speed);const moving=input.length()>.05;walkAmount=THREE.MathUtils.lerp(walkAmount,moving?1:0,.18);if(moving){player.rotation.y=Math.atan2(input.x,-input.y)+yaw;walkTime+=.22}}
+function animatePlayer(){if(!playerReady||!playerModel)return;const bones={};playerModel.traverse(o=>{if(o.isBone)bones[o.name]=o});const s=Math.sin(walkTime)*.65*walkAmount,a=Math.sin(walkTime)*.42*walkAmount;if(bones.thigh_l)bones.thigh_l.rotation.x=s;if(bones.thigh_r)bones.thigh_r.rotation.x=-s;if(bones.upperarm_l)bones.upperarm_l.rotation.z=-a;if(bones.upperarm_r)bones.upperarm_r.rotation.z=a}
+function cameraFollow(){const dist=5.0,height=2.35+pitch*1.6;camera.position.set(player.position.x+Math.sin(yaw)*dist,player.position.y+height,player.position.z+Math.cos(yaw)*dist);const target=player.position.clone();target.y+=1.15;camera.lookAt(target)}
+function loop(){move();animatePlayer();cameraFollow();renderer.render(scene,camera);requestAnimationFrame(loop)}loop();
 addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
-
-const phone=document.getElementById("phone");
-document.getElementById("phoneOpen").onclick=()=>phone.classList.add("show");
-document.getElementById("phoneClose").onclick=()=>phone.classList.remove("show");
-
-const ws=new WebSocket((location.protocol==="https:"?"wss://":"ws://")+location.host);
-ws.addEventListener("open",()=>document.querySelector(".status").textContent="ONLINE ●");
-ws.addEventListener("close",()=>document.querySelector(".status").textContent="OFFLINE ●");
-setInterval(()=>{
-  if(ws.readyState===1)ws.send(JSON.stringify({type:"position",x:player.position.x,z:player.position.z,rotation:player.rotation.y}));
-},100);
-
-try{screen.orientation?.lock?.("landscape").catch(()=>{});}catch{}
+const phone=document.getElementById("phone");document.getElementById("phoneOpen").onclick=()=>phone.classList.add("show");document.getElementById("phoneClose").onclick=()=>phone.classList.remove("show");
+const ws=new WebSocket((location.protocol==="https:"?"wss://":"ws://")+location.host);ws.addEventListener("open",()=>document.querySelector(".status").textContent="ONLINE ●");ws.addEventListener("close",()=>document.querySelector(".status").textContent="OFFLINE ●");setInterval(()=>{if(ws.readyState===1)ws.send(JSON.stringify({type:"position",x:player.position.x,z:player.position.z,rotation:player.rotation.y}))},100);
+try{screen.orientation?.lock?.("landscape").catch(()=>{})}catch{}
 </script>
 </body>
 </html>
