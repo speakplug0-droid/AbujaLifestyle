@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>AbujaLifestyle</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div id="game">
+  <canvas id="scene"></canvas>
+  <div class="hud brand">Abuja<span>Life</span><b>style 🇳🇬</b><i class="status">ONLINE ●</i></div>
+  <div class="hud topnav">
+    <button data-panel="map">🗺 Map</button><button data-panel="cars">🚘 Cars</button><button data-panel="properties">🏠 Properties</button><button data-panel="jobs">💼 Jobs</button><button data-panel="store">🛒 Store</button><button data-panel="settings">⚙ Settings</button>
+  </div>
+  <div class="money"><strong>₦1,250,000</strong><small>ID: <span id="playerId">Player001</span></small></div>
+  <div class="minimap"><div class="player-dot"></div></div>
+  <div class="controls">
+    <div class="joystick" id="joystick"><div class="stick" id="stick"></div></div>
+    <div class="actions"><button id="run">🏃</button><button id="car">🚘</button></div>
+  </div>
+  <button class="phone-open" id="phoneOpen" aria-label="Open phone">📱</button>
+  <div class="phone" id="phone">
+    <div class="phone-shell">
+      <div class="phone-head"><span>4:29 PM · 4G</span><button class="phone-close" id="phoneClose">✕ Close</button></div>
+      <div class="apps">
+        <button class="app"><div class="icon">💼</div>Jobs</button>
+        <button class="app"><div class="icon">💬</div>Messages</button>
+        <button class="app"><div class="icon">🏦</div>Bank</button>
+        <button class="app"><div class="icon">🚕</div>Ride</button>
+        <button class="app"><div class="icon">🏠</div>Houses</button>
+        <button class="app"><div class="icon">🚗</div>Cars</button>
+        <button class="app"><div class="icon">🛍️</div>Shops</button>
+        <button class="app"><div class="icon">📰</div>News</button>
+        <button class="app"><div class="icon">🏛️</div>Abuja Gov</button>
+        <button class="app"><div class="icon">👮</div>Police</button>
+        <button class="app"><div class="icon">🕵️</div>EFCC</button>
+        <button class="app"><div class="icon">🕵️</div>Federal</button>
+        <button class="app"><div class="icon">🪖</div>Army</button>
+        <button class="app"><div class="icon">🏴</div>Bandits</button>
+        <button class="app"><div class="icon">🕴️</div>Club/Gang</button>
+        <button class="app"><div class="icon">🌐</div>Internet</button>
+        <button class="app"><div class="icon">📞</div>Contacts</button>
+        <button class="app"><div class="icon">⚙️</div>Settings</button>
+      </div>
+    </div>
+  </div>
+  <div class="rotate">🔄 Rotate your phone<small>AbujaLifestyle is designed for landscape gameplay.</small></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script>
+const canvas=document.getElementById("scene");
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x8fc9ef);
+scene.fog=new THREE.Fog(0x8fc9ef,70,260);
+
+const camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.1,500);
+camera.position.set(0,5,9);
+
+scene.add(new THREE.HemisphereLight(0xcfe9ff,0x4b3d2b,1.8));
+const sun=new THREE.DirectionalLight(0xffffff,2.2);
+sun.position.set(-40,70,35);sun.castShadow=true;scene.add(sun);
+
+const mat=(c)=>new THREE.MeshStandardMaterial({color:c,roughness:.8});
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(500,500),mat(0x477b43));
+ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+
+function road(x,z,w,d){
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,.08,d),mat(0x24272b));
+  m.position.set(x,.04,z);scene.add(m);
+}
+road(0,0,16,420);road(0,0,420,16);
+
+function building(x,z,w,h,d,c=0x9a9c94){
+  const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));
+  b.position.set(x,h/2,z);b.castShadow=true;b.receiveShadow=true;scene.add(b);
+  for(let y=4;y<h-1;y+=4){
+    for(let xx=-w/2+2;xx<w/2-1;xx+=4){
+      const win=new THREE.Mesh(new THREE.BoxGeometry(1.4,.8,.05),new THREE.MeshStandardMaterial({color:0x274d65,roughness:.3,metalness:.2}));
+      win.position.set(x+xx,y,z-d/2-.03);scene.add(win);
+    }
+  }
+}
+building(-24,-22,18,24,18,0xaaa89e);building(27,-35,22,38,20,0x777d83);building(-28,32,20,30,22,0x8c938e);building(28,45,26,48,24,0x9c9689);
+
+for(let i=0;i<22;i++){
+  const z=-100+i*10;
+  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.35,.45,3),mat(0x70462e));trunk.position.set(-12,1.5,z);scene.add(trunk);
+  const crown=new THREE.Mesh(new THREE.SphereGeometry(2.2,16,12),mat(0x1f7d3d));crown.position.set(-12,4,z);crown.castShadow=true;scene.add(crown);
+}
+
+const player=new THREE.Group();player.position.set(0,0,12);scene.add(player);
+const body=new THREE.Mesh(new THREE.CapsuleGeometry(.42,1.05,6,12),mat(0x20252b));body.position.y=1.05;body.castShadow=true;player.add(body);
+const head=new THREE.Mesh(new THREE.SphereGeometry(.32,16,12),mat(0x75452f));head.position.y=1.9;head.castShadow=true;player.add(head);
+
+const keys={};
+addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
+addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+
+let joyX=0,joyY=0,dragging=false;
+const joy=document.getElementById("joystick"),stick=document.getElementById("stick");
+function joyMove(e){
+  if(!dragging)return;
+  const r=joy.getBoundingClientRect(),p=e.touches?e.touches[0]:e;
+  joyX=Math.max(-1,Math.min(1,(p.clientX-(r.left+r.width/2))/(r.width*.38)));
+  joyY=Math.max(-1,Math.min(1,(p.clientY-(r.top+r.height/2))/(r.height*.38)));
+  stick.style.transform="translate("+joyX*35+"px,"+joyY*35+"px)";
+}
+joy.addEventListener("pointerdown",e=>{dragging=true;joy.setPointerCapture(e.pointerId);joyMove(e)});
+joy.addEventListener("pointermove",joyMove);
+joy.addEventListener("pointerup",()=>{dragging=false;joyX=joyY=0;stick.style.transform=""});
+
+let yaw=0,pitch=.32;
+let lastX=0,lastY=0,look=false;
+canvas.addEventListener("pointerdown",e=>{look=true;lastX=e.clientX;lastY=e.clientY});
+canvas.addEventListener("pointermove",e=>{
+  if(!look)return;
+  yaw-= (e.clientX-lastX)*.008;
+  pitch=Math.max(.12,Math.min(.7,pitch+(e.clientY-lastY)*.005));
+  lastX=e.clientX;lastY=e.clientY;
+});
+canvas.addEventListener("pointerup",()=>look=false);
+canvas.addEventListener("pointercancel",()=>look=false);
+
+function move(){
+  let x=joyX,y=joyY;
+  if(keys.w)x=-0.0,y=-1;
+  if(keys.s)y=1;
+  if(keys.a)x=-1;
+  if(keys.d)x=1;
+  const speed=.12;
+  const forward=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw));
+  const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
+  player.position.addScaledVector(forward,-y*speed);
+  player.position.addScaledVector(right,x*speed);
+  if(Math.abs(x)+Math.abs(y)>.05) player.rotation.y=Math.atan2(x,-y)+yaw;
+}
+function cameraFollow(){
+  const dist=7.2;
+  const h=3.3;
+  camera.position.set(
+    player.position.x+Math.sin(yaw)*dist,
+    player.position.y+h+pitch*2,
+    player.position.z+Math.cos(yaw)*dist
+  );
+  const target=player.position.clone();target.y+=1.25;
+  camera.lookAt(target);
+}
+function loop(){
+  move();cameraFollow();renderer.render(scene,camera);requestAnimationFrame(loop);
+}
+loop();
+
+addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+
+const phone=document.getElementById("phone");
+document.getElementById("phoneOpen").onclick=()=>phone.classList.add("show");
+document.getElementById("phoneClose").onclick=()=>phone.classList.remove("show");
+
+const ws=new WebSocket((location.protocol==="https:"?"wss://":"ws://")+location.host);
+ws.addEventListener("open",()=>document.querySelector(".status").textContent="ONLINE ●");
+ws.addEventListener("close",()=>document.querySelector(".status").textContent="OFFLINE ●");
+setInterval(()=>{
+  if(ws.readyState===1)ws.send(JSON.stringify({type:"position",x:player.position.x,z:player.position.z,rotation:player.rotation.y}));
+},100);
+
+try{screen.orientation?.lock?.("landscape").catch(()=>{});}catch{}
+</script>
+</body>
+</html>
