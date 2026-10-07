@@ -154,9 +154,15 @@ let walkAmount=0;
 
       playerModel.traverse((o) => {
         if (o.isMesh) {
+          o.visible = true;
           o.castShadow = true;
           o.frustumCulled = false;
           o.receiveShadow = true;
+          if (o.isSkinnedMesh) {
+            o.normalizeSkinWeights();
+            o.pose();
+            o.computeBoundingSphere();
+          }
 
           if (o.material) {
             const materials = Array.isArray(o.material) ? o.material : [o.material];
@@ -173,6 +179,8 @@ let walkAmount=0;
 
       player.add(playerModel);
       playerModel.visible = true;
+      player.updateMatrixWorld(true);
+      playerModel.updateMatrixWorld(true);
       playerReady = true;
       setDebug("LOADED ✓ MODEL VISIBLE TEST");
 
