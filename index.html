@@ -104,7 +104,7 @@ for(let i=0;i<22;i++){
   const crown=new THREE.Mesh(new THREE.SphereGeometry(2.2,16,12),mat(0x1f7d3d));crown.position.set(-12,4,z);crown.castShadow=true;scene.add(crown);
 }
 
-const player=new THREE.Group();player.position.set(0,0,12);scene.add(player);
+const player=new THREE.Group();player.position.set(0,0,8);scene.add(player);
 let playerModel=null;
 let playerReady=false;
 let walkTime=0;
@@ -125,7 +125,7 @@ let walkAmount=0;
   const loader = new GLTFLoader(manager);
 
   loader.load(
-    "https://raw.githubusercontent.com/speakplug0-droid/AbujaLifestyle/main/Superhero_Male_FullBody.glb",
+    "./character.glb",
     (gltf) => {
       playerModel = gltf.scene;
 
@@ -148,6 +148,7 @@ let walkAmount=0;
       playerModel.traverse((o) => {
         if (o.isMesh) {
           o.castShadow = true;
+          o.frustumCulled = false;
           o.receiveShadow = true;
 
           if (o.material) {
@@ -160,6 +161,7 @@ let walkAmount=0;
       });
 
       player.add(playerModel);
+      playerModel.visible = true;
       playerReady = true;
 
       console.log(
