@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>AbujaLifestyle</title>
 <link rel="stylesheet" href="/style.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
 </head>
 <body>
 <div id="game">
@@ -47,8 +55,9 @@
   </div>
   <div class="rotate">🔄 Rotate your phone<small>AbujaLifestyle is designed for landscape gameplay.</small></div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-<script>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 const canvas=document.getElementById("scene");
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
@@ -101,44 +110,72 @@ let playerReady=false;
 let walkTime=0;
 let walkAmount=0;
 
-(async()=>{
-  try{
-    const {GLTFLoader}=await import("https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js");
-    const manager=new THREE.LoadingManager();
-    manager.setURLModifier((url)=>{
-      if(url.endsWith("T_Hair_1_Normal_png.png")) return new URL("./T_Hair_1_Normal.png",location.href).href;
-      if(url.endsWith("T_Eye_Normal_png.png")) return new URL("./T_Eye_Normal.png",location.href).href;
-      return url;
-    });
-    const loader=new GLTFLoader(manager);
-    loader.load("./Superhero_Male_FullBody.gltf",(gltf)=>{
-      playerModel=gltf.scene;
-      const box=new THREE.Box3().setFromObject(playerModel);
-      const size=box.getSize(new THREE.Vector3());
-      const targetHeight=2.35;
-      if(size.y>0) playerModel.scale.setScalar(targetHeight/size.y);
-      const scaledBox=new THREE.Box3().setFromObject(playerModel);
-      const center=scaledBox.getCenter(new THREE.Vector3());
-      playerModel.position.x-=center.x;
-      playerModel.position.z-=center.z;
-      playerModel.position.y-=scaledBox.min.y;
-      playerModel.traverse(o=>{
-        if(o.isMesh){
-          o.castShadow=true;
-          o.receiveShadow=true;
-          if(o.material) o.material.needsUpdate=true;
+{
+  const manager = new THREE.LoadingManager();
+
+  manager.onStart = () => console.log("AbujaLifestyle: player loading started");
+  manager.onLoad = () => console.log("AbujaLifestyle: player assets loaded");
+  manager.onError = (url) => console.error("AbujaLifestyle: asset failed:", url);
+
+  const loader = new GLTFLoader(manager);
+
+  loader.load(
+    "./Superhero_Male_FullBody.gltf",
+    (gltf) => {
+      playerModel = gltf.scene;
+
+      const box = new THREE.Box3().setFromObject(playerModel);
+      const size = box.getSize(new THREE.Vector3());
+
+      if (size.y > 0) {
+        playerModel.scale.setScalar(2.35 / size.y);
+      }
+
+      playerModel.updateMatrixWorld(true);
+
+      const scaledBox = new THREE.Box3().setFromObject(playerModel);
+      const center = scaledBox.getCenter(new THREE.Vector3());
+
+      playerModel.position.x -= center.x;
+      playerModel.position.z -= center.z;
+      playerModel.position.y -= scaledBox.min.y;
+
+      playerModel.traverse((o) => {
+        if (o.isMesh) {
+          o.castShadow = true;
+          o.receiveShadow = true;
+
+          if (o.material) {
+            const materials = Array.isArray(o.material) ? o.material : [o.material];
+            for (const material of materials) {
+              material.needsUpdate = true;
+            }
+          }
         }
       });
+
       player.add(playerModel);
-      playerReady=true;
-      console.log("AbujaLifestyle: REAL PLAYER LOADED");
-    },undefined,(error)=>{
-      console.error("PLAYER MODEL ERROR:",error);
-    });
-  }catch(error){
-    console.error("PLAYER LOADER ERROR:",error);
-  }
-})();
+      playerReady = true;
+
+      console.log(
+        "AbujaLifestyle: REAL PLAYER LOADED",
+        "height:", size.y,
+        "children:", playerModel.children.length
+      );
+    },
+    (progress) => {
+      if (progress.total) {
+        console.log(
+          "AbujaLifestyle: player loading",
+          Math.round((progress.loaded / progress.total) * 100) + "%"
+        );
+      }
+    },
+    (error) => {
+      console.error("AbujaLifestyle: PLAYER MODEL ERROR", error);
+    }
+  );
+}
 
 const keys={};
 addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
