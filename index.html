@@ -109,7 +109,7 @@ for(let i=0;i<22;i++){
   const crown=new THREE.Mesh(new THREE.SphereGeometry(2.2,16,12),mat(0x1f7d3d));crown.position.set(-12,4,z);crown.castShadow=true;scene.add(crown);
 }
 
-const player=new THREE.Group();player.position.set(0,0,8);scene.add(player);
+const player=new THREE.Group();player.position.set(0,0,0);scene.add(player);
 let playerModel=null;
 let playerReady=false;
 let walkTime=0;
@@ -139,7 +139,7 @@ let walkAmount=0;
       const size = box.getSize(new THREE.Vector3());
 
       if (size.y > 0) {
-        playerModel.scale.setScalar(2.35 / size.y);
+        playerModel.scale.setScalar(5.2);
       }
 
       playerModel.updateMatrixWorld(true);
@@ -150,6 +150,7 @@ let walkAmount=0;
       playerModel.position.x -= center.x;
       playerModel.position.z -= center.z;
       playerModel.position.y -= scaledBox.min.y;
+      playerModel.position.y += 0.03;
 
       playerModel.traverse((o) => {
         if (o.isMesh) {
@@ -160,6 +161,10 @@ let walkAmount=0;
           if (o.material) {
             const materials = Array.isArray(o.material) ? o.material : [o.material];
             for (const material of materials) {
+              material.side = THREE.DoubleSide;
+              material.transparent = false;
+              material.opacity = 1;
+              material.depthWrite = true;
               material.needsUpdate = true;
             }
           }
@@ -169,7 +174,7 @@ let walkAmount=0;
       player.add(playerModel);
       playerModel.visible = true;
       playerReady = true;
-      setDebug("LOADED ✓ height " + size.y.toFixed(2) + "m");
+      setDebug("LOADED ✓ MODEL VISIBLE TEST");
 
       console.log(
         "AbujaLifestyle: REAL PLAYER LOADED",
