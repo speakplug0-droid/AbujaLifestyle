@@ -96,8 +96,49 @@ for(let i=0;i<22;i++){
 }
 
 const player=new THREE.Group();player.position.set(0,0,12);scene.add(player);
-const body=new THREE.Mesh(new THREE.CapsuleGeometry(.42,1.05,6,12),mat(0x20252b));body.position.y=1.05;body.castShadow=true;player.add(body);
-const head=new THREE.Mesh(new THREE.SphereGeometry(.32,16,12),mat(0x75452f));head.position.y=1.9;head.castShadow=true;player.add(head);
+let playerModel=null;
+let playerReady=false;
+let walkTime=0;
+let walkAmount=0;
+
+(async()=>{
+  try{
+    const {GLTFLoader}=await import("https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js");
+    const manager=new THREE.LoadingManager();
+    manager.setURLModifier((url)=>{
+      if(url.endsWith("T_Hair_1_Normal_png.png")) return new URL("./T_Hair_1_Normal.png",location.href).href;
+      if(url.endsWith("T_Eye_Normal_png.png")) return new URL("./T_Eye_Normal.png",location.href).href;
+      return url;
+    });
+    const loader=new GLTFLoader(manager);
+    loader.load("./Superhero_Male_FullBody.gltf",(gltf)=>{
+      playerModel=gltf.scene;
+      const box=new THREE.Box3().setFromObject(playerModel);
+      const size=box.getSize(new THREE.Vector3());
+      const targetHeight=2.35;
+      if(size.y>0) playerModel.scale.setScalar(targetHeight/size.y);
+      const scaledBox=new THREE.Box3().setFromObject(playerModel);
+      const center=scaledBox.getCenter(new THREE.Vector3());
+      playerModel.position.x-=center.x;
+      playerModel.position.z-=center.z;
+      playerModel.position.y-=scaledBox.min.y;
+      playerModel.traverse(o=>{
+        if(o.isMesh){
+          o.castShadow=true;
+          o.receiveShadow=true;
+          if(o.material) o.material.needsUpdate=true;
+        }
+      });
+      player.add(playerModel);
+      playerReady=true;
+      console.log("AbujaLifestyle: REAL PLAYER LOADED");
+    },undefined,(error)=>{
+      console.error("PLAYER MODEL ERROR:",error);
+    });
+  }catch(error){
+    console.error("PLAYER LOADER ERROR:",error);
+  }
+})();
 
 const keys={};
 addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
@@ -116,13 +157,13 @@ joy.addEventListener("pointerdown",e=>{dragging=true;joy.setPointerCapture(e.poi
 joy.addEventListener("pointermove",joyMove);
 joy.addEventListener("pointerup",()=>{dragging=false;joyX=joyY=0;stick.style.transform=""});
 
-let yaw=0,pitch=.32;
+let yaw=0,pitch=.20;
 let lastX=0,lastY=0,look=false;
 canvas.addEventListener("pointerdown",e=>{look=true;lastX=e.clientX;lastY=e.clientY});
 canvas.addEventListener("pointermove",e=>{
   if(!look)return;
-  yaw-= (e.clientX-lastX)*.008;
-  pitch=Math.max(.12,Math.min(.7,pitch+(e.clientY-lastY)*.005));
+  yaw-=(e.clientX-lastX)*.008;
+  pitch=Math.max(.05,Math.min(.55,pitch+(e.clientY-lastY)*.005));
   lastX=e.clientX;lastY=e.clientY;
 });
 canvas.addEventListener("pointerup",()=>look=false);
@@ -130,30 +171,51 @@ canvas.addEventListener("pointercancel",()=>look=false);
 
 function move(){
   let x=joyX,y=joyY;
-  if(keys.w)x=-0.0,y=-1;
+  if(keys.w)y=-1;
   if(keys.s)y=1;
   if(keys.a)x=-1;
   if(keys.d)x=1;
-  const speed=.12;
+  const input=new THREE.Vector2(x,y);
+  if(input.length()>1) input.normalize();
+  const speed=.13;
   const forward=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw));
   const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
-  player.position.addScaledVector(forward,-y*speed);
-  player.position.addScaledVector(right,x*speed);
-  if(Math.abs(x)+Math.abs(y)>.05) player.rotation.y=Math.atan2(x,-y)+yaw;
+  player.position.addScaledVector(forward,-input.y*speed);
+  player.position.addScaledVector(right,input.x*speed);
+  const moving=input.length()>.05;
+  walkAmount=THREE.MathUtils.lerp(walkAmount,moving?1:0,.18);
+  if(moving){
+    player.rotation.y=Math.atan2(input.x,-input.y)+yaw;
+    walkTime+=.22;
+  }
+}
+function animatePlayer(){
+  if(!playerReady||!playerModel)return;
+  const bones={};
+  playerModel.traverse(o=>{if(o.isBone) bones[o.name]=o;});
+  const swing=Math.sin(walkTime)*.65*walkAmount;
+  const armSwing=Math.sin(walkTime)*.42*walkAmount;
+  if(bones.thigh_l) bones.thigh_l.rotation.x=swing;
+  if(bones.thigh_r) bones.thigh_r.rotation.x=-swing;
+  if(bones.calf_l) bones.calf_l.rotation.x=-Math.max(0,-swing)*.55;
+  if(bones.calf_r) bones.calf_r.rotation.x=-Math.max(0,swing)*.55;
+  if(bones.upperarm_l) bones.upperarm_l.rotation.z=-armSwing;
+  if(bones.upperarm_r) bones.upperarm_r.rotation.z=armSwing;
+  if(bones.lowerarm_l) bones.lowerarm_l.rotation.z=armSwing*.35;
+  if(bones.lowerarm_r) bones.lowerarm_r.rotation.z=-armSwing*.35;
 }
 function cameraFollow(){
-  const dist=7.2;
-  const h=3.3;
-  camera.position.set(
-    player.position.x+Math.sin(yaw)*dist,
-    player.position.y+h+pitch*2,
-    player.position.z+Math.cos(yaw)*dist
-  );
-  const target=player.position.clone();target.y+=1.25;
+  const dist=6.2;
+  const height=2.55+pitch*1.8;
+  const cameraX=player.position.x+Math.sin(yaw)*dist;
+  const cameraZ=player.position.z+Math.cos(yaw)*dist;
+  camera.position.set(cameraX,player.position.y+height,cameraZ);
+  const target=player.position.clone();
+  target.y+=1.18;
   camera.lookAt(target);
 }
 function loop(){
-  move();cameraFollow();renderer.render(scene,camera);requestAnimationFrame(loop);
+  move();animatePlayer();cameraFollow();renderer.render(scene,camera);requestAnimationFrame(loop);
 }
 loop();
 
