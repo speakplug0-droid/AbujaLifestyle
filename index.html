@@ -16,6 +16,7 @@
 </head>
 <body>
 <div id="game">
+<div id="playerDebug" style="position:fixed;left:10px;top:58px;z-index:99999;background:rgba(0,0,0,.88);color:#fff;padding:8px 12px;border:2px solid #ffcc00;border-radius:8px;font:700 13px Arial;max-width:320px">PLAYER: STARTING…</div>
   <canvas id="scene"></canvas>
   <div class="hud brand">Abuja<span>Life</span><b>style 🇳🇬</b><i class="status">ONLINE ●</i></div>
   <div class="hud topnav">
@@ -58,6 +59,10 @@
 <script type="module">
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+const debug=document.getElementById("playerDebug");
+const setDebug=(text,bad=false)=>{debug.textContent="PLAYER: "+text;debug.style.borderColor=bad?"#ff4444":"#55ff55";debug.style.color=bad?"#ff7777":"#ffffff";};
+window.addEventListener("error",e=>setDebug("JAVASCRIPT ERROR — "+(e.message||"unknown"),true));
+window.addEventListener("unhandledrejection",e=>setDebug("ERROR — "+(e.reason?.message||e.reason||"unknown"),true));
 const canvas=document.getElementById("scene");
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
@@ -123,6 +128,7 @@ let walkAmount=0;
   manager.onError = (url) => console.error("AbujaLifestyle: asset failed:", url);
 
   const loader = new GLTFLoader(manager);
+  setDebug("LOADING character.glb…");
 
   loader.load(
     "./character.glb",
@@ -163,6 +169,7 @@ let walkAmount=0;
       player.add(playerModel);
       playerModel.visible = true;
       playerReady = true;
+      setDebug("LOADED ✓ height " + size.y.toFixed(2) + "m");
 
       console.log(
         "AbujaLifestyle: REAL PLAYER LOADED",
@@ -172,6 +179,7 @@ let walkAmount=0;
     },
     (progress) => {
       if (progress.total) {
+        setDebug("LOADING character.glb… " + Math.round((progress.loaded / progress.total) * 100) + "%");
         console.log(
           "AbujaLifestyle: player loading",
           Math.round((progress.loaded / progress.total) * 100) + "%"
@@ -180,6 +188,7 @@ let walkAmount=0;
     },
     (error) => {
       console.error("AbujaLifestyle: PLAYER MODEL ERROR", error);
+      setDebug("MODEL ERROR — " + (error?.message || "check character.glb"), true);
     }
   );
 }
