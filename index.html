@@ -113,6 +113,11 @@ let walkAmount=0;
 {
   const manager = new THREE.LoadingManager();
 
+  manager.setURLModifier((url) => {
+    if (url.includes("raw.githubusercontent.com")) return url;
+    return url;
+  });
+
   manager.onStart = () => console.log("AbujaLifestyle: player loading started");
   manager.onLoad = () => console.log("AbujaLifestyle: player assets loaded");
   manager.onError = (url) => console.error("AbujaLifestyle: asset failed:", url);
@@ -120,7 +125,7 @@ let walkAmount=0;
   const loader = new GLTFLoader(manager);
 
   loader.load(
-    "./Superhero_Male_FullBody.gltf",
+    "https://raw.githubusercontent.com/speakplug0-droid/AbujaLifestyle/main/Superhero_Male_FullBody.gltf",
     (gltf) => {
       playerModel = gltf.scene;
 
