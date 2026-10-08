@@ -96,7 +96,7 @@ loader.load("https://raw.githubusercontent.com/speakplug0-droid/abuja-lifestyle/
    VISIBLE 3D SUV + DRIVING
 ===================================================== */
 const carGroup=new THREE.Group();
-carGroup.position.set(4,0,7);
+carGroup.position.set(4,0,-6);
 scene.add(carGroup);
 let carModel=null,driving=false,carSpeed=0,carSteer=0;
 function makeFallbackCar(){
@@ -117,7 +117,7 @@ function loadCar(){
     carModel=gltf.scene;
     const b0=new THREE.Box3().setFromObject(carModel),s=b0.getSize(new THREE.Vector3());
     const length=Math.max(s.z,s.x);
-    if(length>0) carModel.scale.setScalar(3.7/length);
+    if(length>0) carModel.scale.setScalar(3.2/length);
     carModel.updateMatrixWorld(true);
     const b1=new THREE.Box3().setFromObject(carModel),ctr=b1.getCenter(new THREE.Vector3());
     carModel.position.x-=ctr.x;carModel.position.z-=ctr.z;carModel.position.y-=b1.min.y;
