@@ -52,12 +52,13 @@ for(let i=0;i<22;i++){const z=-100+i*10;const trunk=new THREE.Mesh(new THREE.Cyl
 const player=new THREE.Group();scene.add(player);
 let playerModel=null,playerReady=false,walkTime=0,walkAmount=0;
 const loader=new GLTFLoader();setDebug("LOADING REAL PLAYER…");
-loader.load("https://raw.githubusercontent.com/programasweights/avatar/main/public/assets/character.glb",gltf=>{
+loader.load("https://raw.githubusercontent.com/speakplug0-droid/abuja-lifestyle/main/Superhero_Male_FullBody.gltf",gltf=>{
   playerModel=gltf.scene;
   const originalBox=new THREE.Box3().setFromObject(playerModel),originalSize=originalBox.getSize(new THREE.Vector3());
-  playerModel.scale.setScalar(5.2);playerModel.updateMatrixWorld(true);
+  const targetHeight=1.9;
+  if(originalSize.y>0) playerModel.scale.setScalar(targetHeight/originalSize.y);playerModel.updateMatrixWorld(true);
   const box=new THREE.Box3().setFromObject(playerModel),center=box.getCenter(new THREE.Vector3());
-  playerModel.position.x-=center.x;playerModel.position.z-=center.z;playerModel.position.y-=box.min.y+0.03;
+  playerModel.position.x-=center.x;playerModel.position.z-=center.z;playerModel.position.y-=box.min.y;
   playerModel.traverse(o=>{
     o.visible=true;
     if(!o.isMesh)return;
@@ -75,18 +76,68 @@ loader.load("https://raw.githubusercontent.com/programasweights/avatar/main/publ
   console.log("PLAYER HEIGHT",originalSize.y,"SCALED HEIGHT",box.max.y-box.min.y);
 },undefined,error=>{console.error(error);setDebug("MODEL ERROR — "+(error?.message||"unknown"),true)});
 
+
+/* =====================================================
+   VISIBLE 3D SUV + DRIVING
+===================================================== */
+const carGroup=new THREE.Group();
+carGroup.position.set(4,0,8);
+scene.add(carGroup);
+let carModel=null,driving=false,carSpeed=0,carSteer=0;
+function makeFallbackCar(){
+  const g=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.BoxGeometry(2.6,.75,4.7),mat(0x60656a));
+  body.position.y=.72;g.add(body);
+  const cabin=new THREE.Mesh(new THREE.BoxGeometry(2.2,.75,2.4),mat(0x1e2b35));
+  cabin.position.set(0,1.28,.15);g.add(cabin);
+  for(const x of [-1.35,1.35]) for(const z of [-1.45,1.45]){
+    const w=new THREE.Mesh(new THREE.CylinderGeometry(.38,.38,.28,16),mat(0x111111));
+    w.rotation.z=Math.PI/2;w.position.set(x,.42,z);g.add(w);
+  }
+  return g;
+}
+function loadCar(){
+  const cl=new GLTFLoader();
+  cl.load("https://cdn.3dassets.dev/assets/32519/v1/model.glb",gltf=>{
+    carModel=gltf.scene;
+    const b0=new THREE.Box3().setFromObject(carModel),s=b0.getSize(new THREE.Vector3());
+    const length=Math.max(s.z,s.x);
+    if(length>0) carModel.scale.setScalar(4.8/length);
+    carModel.updateMatrixWorld(true);
+    const b1=new THREE.Box3().setFromObject(carModel),ctr=b1.getCenter(new THREE.Vector3());
+    carModel.position.x-=ctr.x;carModel.position.z-=ctr.z;carModel.position.y-=b1.min.y;
+    carModel.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
+    carGroup.add(carModel);
+  },undefined,()=>{carGroup.add(makeFallbackCar())});
+}
+loadCar();
+
+function updateCar(){
+  if(!driving)return;
+  const forward=(joyY<-.05||keys.w);
+  const reverse=(joyY>.05||keys.s);
+  if(forward)carSpeed=Math.min(.55,carSpeed+.012);
+  else if(reverse)carSpeed=Math.max(-.3,carSpeed-.01);
+  else carSpeed*=.93;
+  const steer=joyX+(keys.a?-1:0)+(keys.d?1:0);
+  carSteer+=(steer-carSteer)*.18;
+  carGroup.rotation.y-=carSteer*.028*Math.sign(carSpeed||1);
+  carGroup.translateZ(carSpeed);
+}
+
 const keys={};addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 let joyX=0,joyY=0,dragging=false;const joy=document.getElementById("joystick"),stick=document.getElementById("stick");
 function joyMove(e){if(!dragging)return;const r=joy.getBoundingClientRect(),p=e.touches?e.touches[0]:e;joyX=Math.max(-1,Math.min(1,(p.clientX-(r.left+r.width/2))/(r.width*.38)));joyY=Math.max(-1,Math.min(1,(p.clientY-(r.top+r.height/2))/(r.height*.38)));stick.style.transform="translate("+joyX*35+"px,"+joyY*35+"px)"}
 joy.addEventListener("pointerdown",e=>{dragging=true;joy.setPointerCapture(e.pointerId);joyMove(e)});joy.addEventListener("pointermove",joyMove);joy.addEventListener("pointerup",()=>{dragging=false;joyX=joyY=0;stick.style.transform=""});
 let yaw=0,pitch=.20,lastX=0,lastY=0,look=false;
 canvas.addEventListener("pointerdown",e=>{look=true;lastX=e.clientX;lastY=e.clientY});canvas.addEventListener("pointermove",e=>{if(!look)return;yaw-=(e.clientX-lastX)*.008;pitch=Math.max(.05,Math.min(.55,pitch+(e.clientY-lastY)*.005));lastX=e.clientX;lastY=e.clientY});canvas.addEventListener("pointerup",()=>look=false);canvas.addEventListener("pointercancel",()=>look=false);
-function move(){let x=joyX,y=joyY;if(keys.w)y=-1;if(keys.s)y=1;if(keys.a)x=-1;if(keys.d)x=1;const input=new THREE.Vector2(x,y);if(input.length()>1)input.normalize();const speed=.13;const forward=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw));const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));player.position.addScaledVector(forward,-input.y*speed);player.position.addScaledVector(right,input.x*speed);const moving=input.length()>.05;walkAmount=THREE.MathUtils.lerp(walkAmount,moving?1:0,.18);if(moving){player.rotation.y=Math.atan2(input.x,-input.y)+yaw;walkTime+=.22}}
+function move(){if(driving){updateCar();return;} let x=joyX,y=joyY;if(keys.w)y=-1;if(keys.s)y=1;if(keys.a)x=-1;if(keys.d)x=1;const input=new THREE.Vector2(x,y);if(input.length()>1)input.normalize();const speed=.13;const forward=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw));const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));player.position.addScaledVector(forward,-input.y*speed);player.position.addScaledVector(right,input.x*speed);const moving=input.length()>.05;walkAmount=THREE.MathUtils.lerp(walkAmount,moving?1:0,.18);if(moving){player.rotation.y=Math.atan2(input.x,-input.y)+yaw;walkTime+=.22}}
 function animatePlayer(){if(!playerReady||!playerModel)return;const bones={};playerModel.traverse(o=>{if(o.isBone)bones[o.name]=o});const s=Math.sin(walkTime)*.65*walkAmount,a=Math.sin(walkTime)*.42*walkAmount;if(bones.thigh_l)bones.thigh_l.rotation.x=s;if(bones.thigh_r)bones.thigh_r.rotation.x=-s;if(bones.upperarm_l)bones.upperarm_l.rotation.z=-a;if(bones.upperarm_r)bones.upperarm_r.rotation.z=a}
-function cameraFollow(){const dist=5.0,height=2.35+pitch*1.6;camera.position.set(player.position.x+Math.sin(yaw)*dist,player.position.y+height,player.position.z+Math.cos(yaw)*dist);const target=player.position.clone();target.y+=1.15;camera.lookAt(target)}
+function cameraFollow(){const targetObj=driving?carGroup:player;const dist=driving?8:5.5,height=driving?3.2:2.35+pitch*1.6;camera.position.set(targetObj.position.x+Math.sin(yaw)*dist,targetObj.position.y+height,targetObj.position.z+Math.cos(yaw)*dist);const target=targetObj.position.clone();target.y+=driving?1.0:1.15;camera.lookAt(target)}
 function loop(){move();animatePlayer();cameraFollow();renderer.render(scene,camera);requestAnimationFrame(loop)}loop();
 addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 const phone=document.getElementById("phone");document.getElementById("phoneOpen").onclick=()=>phone.classList.add("show");document.getElementById("phoneClose").onclick=()=>phone.classList.remove("show");
+document.getElementById("car").onclick=()=>{driving=!driving; if(driving){player.visible=false; setDebug("DRIVING ✓ SUV");}else{player.visible=true; player.position.set(carGroup.position.x+3,0,carGroup.position.z); setDebug("LOADED ✓ REAL PLAYER");}};
 const ws=new WebSocket((location.protocol==="https:"?"wss://":"ws://")+location.host);ws.addEventListener("open",()=>document.querySelector(".status").textContent="ONLINE ●");ws.addEventListener("close",()=>document.querySelector(".status").textContent="OFFLINE ●");setInterval(()=>{if(ws.readyState===1)ws.send(JSON.stringify({type:"position",x:player.position.x,z:player.position.z,rotation:player.rotation.y}))},100);
 try{screen.orientation?.lock?.("landscape").catch(()=>{})}catch{}
 </script>
