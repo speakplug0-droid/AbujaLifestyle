@@ -127,17 +127,56 @@ function loadCar(){
 }
 loadCar();
 
+function isOnRoad(x,z){
+  // Main AbujaLifestyle road network: central north/south and east/west corridors.
+  const mainNS=Math.abs(x)<=7.7;
+  const mainEW=Math.abs(z)<=7.7;
+  return mainNS||mainEW;
+}
+const carNext=new THREE.Vector3();
+
+function tryMoveCar(distance){
+  carNext.copy(carGroup.position);
+  carNext.x += Math.sin(carGroup.rotation.y)*distance;
+  carNext.z += Math.cos(carGroup.rotation.y)*distance;
+
+  // Keep the SUV's body safely inside the paved surface.
+  const margin=2.1;
+  const checks=[
+    [0,0],[margin,0],[-margin,0],[0,margin],[0,-margin]
+  ];
+  for(const [x,z] of checks){
+    if(!isOnRoad(carNext.x+x,carNext.z+z)){
+      carSpeed*=.45;
+      return false;
+    }
+  }
+  carGroup.position.copy(carNext);
+  return true;
+}
+
 function updateCar(){
   if(!driving)return;
   const forward=(joyY<-.05||keys.w);
   const reverse=(joyY>.05||keys.s);
-  if(forward)carSpeed=Math.min(.55,carSpeed+.012);
-  else if(reverse)carSpeed=Math.max(-.3,carSpeed-.01);
-  else carSpeed*=.93;
+
+  if(forward)carSpeed=Math.min(1.20,carSpeed+.028);
+  else if(reverse)carSpeed=Math.max(-.50,carSpeed-.040);
+  else carSpeed*=.955;
+
   const steer=joyX+(keys.a?-1:0)+(keys.d?1:0);
-  carSteer+=(steer-carSteer)*.18;
-  carGroup.rotation.y-=carSteer*.028*Math.sign(carSpeed||1);
-  carGroup.translateZ(carSpeed);
+  carSteer+=(steer-carSteer)*.20;
+
+  if(Math.abs(carSpeed)>.006){
+    const speedRatio=Math.min(Math.abs(carSpeed)/1.20,1);
+    const steeringStrength=.018+speedRatio*.042;
+    carGroup.rotation.y-=carSteer*steeringStrength*(carSpeed>=0?1:-0.72);
+
+    if(!tryMoveCar(carSpeed))carSpeed=0;
+  }
+
+  if(Math.abs(steer)<.04)carSteer*=.88;
+  if(!forward&&!reverse&&Math.abs(carSpeed)<.018)carSpeed=0;
 }
 
 const keys={};addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
