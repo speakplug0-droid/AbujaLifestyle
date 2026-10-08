@@ -15,7 +15,7 @@
 <canvas id="scene"></canvas>
 <div class="hud brand">Abuja<span>Life</span><b>style 🇳🇬</b><i class="status">ONLINE ●</i></div>
 <div class="hud topnav"><button>🗺 Map</button><button>🚘 Cars</button><button>🏠 Properties</button><button>💼 Jobs</button><button>🛒 Store</button><button>⚙ Settings</button></div>
-<div class="money"><strong>₦1,250,000</strong><small>ID: <span id="playerId">Player001</span></small></div>
+<div class="money"><strong>₦1,250,000</strong><small>ID: <span id="playerId">Player001</span></small></div><div id="driveHint" style="position:fixed;left:50%;bottom:92px;transform:translateX(-50%);z-index:20;background:rgba(0,0,0,.75);color:#fff;padding:9px 14px;border:1px solid rgba(255,255,255,.25);border-radius:14px;font:700 13px Arial;display:none">🚘 Tap the car button to enter vehicle</div><div id="speedHud" style="position:fixed;right:22px;bottom:92px;z-index:20;color:#fff;background:rgba(0,0,0,.65);padding:8px 12px;border-radius:12px;font:700 14px Arial;display:none">0 km/h</div>
 <div class="minimap"><div class="player-dot"></div></div>
 <div class="controls"><div class="joystick" id="joystick"><div class="stick" id="stick"></div></div><div class="actions"><button id="run">🏃</button><button id="car">🚘</button></div></div>
 <button class="phone-open" id="phoneOpen">📱</button>
@@ -96,7 +96,7 @@ loader.load("https://raw.githubusercontent.com/speakplug0-droid/abuja-lifestyle/
    VISIBLE 3D SUV + DRIVING
 ===================================================== */
 const carGroup=new THREE.Group();
-carGroup.position.set(4,0,-6);
+carGroup.position.set(3.5,0,-7);
 scene.add(carGroup);
 let carModel=null,driving=false,carSpeed=0,carSteer=0;
 function makeFallbackCar(){
@@ -141,18 +141,36 @@ function updateCar(){
 }
 
 const keys={};addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
-let joyX=0,joyY=0,dragging=false;const joy=document.getElementById("joystick"),stick=document.getElementById("stick");
+let joyX=0,joyY=0,dragging=false,runHeld=false;const joy=document.getElementById("joystick"),stick=document.getElementById("stick");
 function joyMove(e){if(!dragging)return;const r=joy.getBoundingClientRect(),p=e.touches?e.touches[0]:e;joyX=Math.max(-1,Math.min(1,(p.clientX-(r.left+r.width/2))/(r.width*.38)));joyY=Math.max(-1,Math.min(1,(p.clientY-(r.top+r.height/2))/(r.height*.38)));stick.style.transform="translate("+joyX*35+"px,"+joyY*35+"px)"}
 joy.addEventListener("pointerdown",e=>{dragging=true;joy.setPointerCapture(e.pointerId);joyMove(e)});joy.addEventListener("pointermove",joyMove);joy.addEventListener("pointerup",()=>{dragging=false;joyX=joyY=0;stick.style.transform=""});
 let yaw=0,pitch=.20,lastX=0,lastY=0,look=false; camera.position.set(0,4.2,10); camera.lookAt(0,1,2);
 canvas.addEventListener("pointerdown",e=>{look=true;lastX=e.clientX;lastY=e.clientY});canvas.addEventListener("pointermove",e=>{if(!look)return;yaw-=(e.clientX-lastX)*.008;pitch=Math.max(.05,Math.min(.55,pitch+(e.clientY-lastY)*.005));lastX=e.clientX;lastY=e.clientY});canvas.addEventListener("pointerup",()=>look=false);canvas.addEventListener("pointercancel",()=>look=false);
-function move(){if(driving){updateCar();return;} let x=joyX,y=joyY;if(keys.w)y=-1;if(keys.s)y=1;if(keys.a)x=-1;if(keys.d)x=1;const input=new THREE.Vector2(x,y);if(input.length()>1)input.normalize();const speed=.13;const forward=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw));const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));player.position.addScaledVector(forward,-input.y*speed);player.position.addScaledVector(right,input.x*speed);const moving=input.length()>.05;walkAmount=THREE.MathUtils.lerp(walkAmount,moving?1:0,.18);if(moving){player.rotation.y=Math.atan2(input.x,-input.y)+yaw;walkTime+=.22}}
+function move(){if(driving){updateCar();return;} let x=joyX,y=joyY;if(keys.w)y=-1;if(keys.s)y=1;if(keys.a)x=-1;if(keys.d)x=1;const input=new THREE.Vector2(x,y);if(input.length()>1)input.normalize();const speed=runHeld?.20:.13;const forward=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw));const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));player.position.addScaledVector(forward,-input.y*speed);player.position.addScaledVector(right,input.x*speed);const moving=input.length()>.05;walkAmount=THREE.MathUtils.lerp(walkAmount,moving?1:0,.18);if(moving){player.rotation.y=Math.atan2(input.x,-input.y)+yaw;walkTime+=.22}}
 function animatePlayer(){if(!playerReady||!playerModel)return;const bones={};playerModel.traverse(o=>{if(o.isBone)bones[o.name]=o});const s=Math.sin(walkTime)*.65*walkAmount,a=Math.sin(walkTime)*.42*walkAmount;if(bones.thigh_l)bones.thigh_l.rotation.x=s;if(bones.thigh_r)bones.thigh_r.rotation.x=-s;if(bones.upperarm_l)bones.upperarm_l.rotation.z=-a;if(bones.upperarm_r)bones.upperarm_r.rotation.z=a}
 function cameraFollow(){const targetObj=driving?carGroup:player;const dist=driving?7.5:6.2,height=driving?2.9:2.6+pitch*1.6;camera.position.set(targetObj.position.x+Math.sin(yaw)*dist,targetObj.position.y+height,targetObj.position.z+Math.cos(yaw)*dist);const target=targetObj.position.clone();target.y+=driving?1.0:1.15;camera.lookAt(target)}
-function loop(){move();animatePlayer();cameraFollow();renderer.render(scene,camera);requestAnimationFrame(loop)}loop();
+function loop(){
+  move();animatePlayer();cameraFollow();
+  if(!driving){
+    const near=Math.hypot(player.position.x-carGroup.position.x,player.position.z-carGroup.position.z)<7;
+    driveHint.style.display=near?"block":"none";
+  }else{
+    speedHud.textContent=Math.round(Math.abs(carSpeed)*55)+" km/h";
+  }
+  renderer.render(scene,camera);requestAnimationFrame(loop)
+}loop();
 addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 const phone=document.getElementById("phone");document.getElementById("phoneOpen").onclick=()=>phone.classList.add("show");document.getElementById("phoneClose").onclick=()=>phone.classList.remove("show");
-document.getElementById("car").onclick=()=>{driving=!driving; if(driving){player.visible=false; setDebug("DRIVING ✓ SUV");}else{player.visible=true; player.position.set(carGroup.position.x+3,0,carGroup.position.z); setDebug("LOADED ✓ REAL PLAYER");}};
+const carBtn=document.getElementById("car"),runBtn=document.getElementById("run"),driveHint=document.getElementById("driveHint"),speedHud=document.getElementById("speedHud");
+runBtn.addEventListener("pointerdown",()=>runHeld=true);runBtn.addEventListener("pointerup",()=>runHeld=false);runBtn.addEventListener("pointercancel",()=>runHeld=false);runBtn.addEventListener("pointerleave",()=>runHeld=false);
+carBtn.onclick=()=>{
+  const dx=player.position.x-carGroup.position.x,dz=player.position.z-carGroup.position.z;
+  const near=Math.hypot(dx,dz)<7;
+  if(!driving && !near){setDebug("WALK CLOSER TO SUV");return;}
+  driving=!driving;
+  if(driving){player.visible=false;driveHint.style.display="none";speedHud.style.display="block";setDebug("DRIVING ✓ SUV");}
+  else{player.visible=true;player.position.set(carGroup.position.x+2.5,0,carGroup.position.z+1.5);speedHud.style.display="none";setDebug("PLAYER READY ✓");}
+};
 const ws=new WebSocket((location.protocol==="https:"?"wss://":"ws://")+location.host);ws.addEventListener("open",()=>document.querySelector(".status").textContent="ONLINE ●");ws.addEventListener("close",()=>document.querySelector(".status").textContent="OFFLINE ●");setInterval(()=>{if(ws.readyState===1)ws.send(JSON.stringify({type:"position",x:player.position.x,z:player.position.z,rotation:player.rotation.y}))},100);
 try{screen.orientation?.lock?.("landscape").catch(()=>{})}catch{}
 </script>
