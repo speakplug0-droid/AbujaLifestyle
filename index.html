@@ -123,29 +123,64 @@ scene.add(carGroup);
 let carModel=null,driving=false,carSpeed=0,carSteer=0;
 function makeFallbackCar(){
   const g=new THREE.Group();
-  const body=new THREE.Mesh(new THREE.BoxGeometry(2.6,.75,4.7),mat(0x60656a));
-  body.position.y=.72;g.add(body);
-  const cabin=new THREE.Mesh(new THREE.BoxGeometry(2.2,.75,2.4),mat(0x1e2b35));
-  cabin.position.set(0,1.28,.15);g.add(cabin);
-  for(const x of [-1.35,1.35]) for(const z of [-1.45,1.45]){
-    const w=new THREE.Mesh(new THREE.CylinderGeometry(.38,.38,.28,16),mat(0x111111));
-    w.rotation.z=Math.PI/2;w.position.set(x,.42,z);g.add(w);
+  const paint=mat(0x1f2328), dark=mat(0x11151a), glass=new THREE.MeshStandardMaterial({color:0x172b38,roughness:.18,metalness:.25});
+  const chrome=new THREE.MeshStandardMaterial({color:0xbfc6cc,roughness:.25,metalness:.85});
+  const light=new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xffffff,emissiveIntensity:1.8});
+  const red=new THREE.MeshStandardMaterial({color:0x8b1010,emissive:0x330000,emissiveIntensity:.7});
+
+  const body=new THREE.Mesh(new THREE.BoxGeometry(2.75,.72,4.85),paint);
+  body.position.y=.72;body.castShadow=true;g.add(body);
+
+  // Raised SUV hood + roof for a much more convincing silhouette.
+  const hood=new THREE.Mesh(new THREE.BoxGeometry(2.55,.32,1.35),paint);
+  hood.position.set(0,1.08,-1.72);hood.castShadow=true;g.add(hood);
+  const roof=new THREE.Mesh(new THREE.BoxGeometry(2.48,.16,2.55),paint);
+  roof.position.set(0,1.68,.35);roof.castShadow=true;g.add(roof);
+  const cabin=new THREE.Mesh(new THREE.BoxGeometry(2.38,.72,2.65),glass);
+  cabin.position.set(0,1.45,.35);cabin.castShadow=true;g.add(cabin);
+
+  // Window pillars.
+  for(const x of [-1.18,1.18]) for(const z of [-.72,.58]){
+    const p=new THREE.Mesh(new THREE.BoxGeometry(.10,.66,.10),dark);p.position.set(x,1.48,z);g.add(p);
   }
+
+  // Front/rear bumpers and grille.
+  const frontB=new THREE.Mesh(new THREE.BoxGeometry(2.72,.20,.16),dark);frontB.position.set(0,.50,-2.48);g.add(frontB);
+  const rearB=new THREE.Mesh(new THREE.BoxGeometry(2.72,.20,.16),dark);rearB.position.set(0,.50,2.48);g.add(rearB);
+  const grille=new THREE.Mesh(new THREE.BoxGeometry(1.15,.25,.08),chrome);grille.position.set(0,.78,-2.51);g.add(grille);
+
+  // Headlights / tail lights.
+  for(const x of [-.82,.82]){
+    const h=new THREE.Mesh(new THREE.BoxGeometry(.48,.20,.08),light);h.position.set(x,.88,-2.53);g.add(h);
+    const t=new THREE.Mesh(new THREE.BoxGeometry(.48,.20,.08),red);t.position.set(x,.88,2.53);g.add(t);
+  }
+
+  // Wheels with visible hubs.
+  for(const x of [-1.42,1.42]) for(const z of [-1.55,1.55]){
+    const tire=new THREE.Mesh(new THREE.CylinderGeometry(.43,.43,.30,20),dark);
+    tire.rotation.z=Math.PI/2;tire.position.set(x,.48,z);tire.castShadow=true;g.add(tire);
+    const hub=new THREE.Mesh(new THREE.CylinderGeometry(.19,.19,.315,16),chrome);
+    hub.rotation.z=Math.PI/2;hub.position.set(x,.48,z);g.add(hub);
+  }
+
+  // Side mirrors + door handles.
+  for(const x of [-1.43,1.43]){
+    const mirror=new THREE.Mesh(new THREE.BoxGeometry(.20,.16,.34),dark);
+    mirror.position.set(x,1.35,-.62);g.add(mirror);
+  }
+  for(const x of [-1.27,1.27]) for(const z of [-.55,.65]){
+    const handle=new THREE.Mesh(new THREE.BoxGeometry(.07,.045,.25),chrome);
+    handle.position.set(x,1.05,z);g.add(handle);
+  }
+
+  g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
   return g;
 }
 function loadCar(){
-  const cl=new GLTFLoader();
-  cl.load("https://cdn.3dassets.dev/assets/32519/v1/model.glb",gltf=>{
-    carModel=gltf.scene;
-    const b0=new THREE.Box3().setFromObject(carModel),s=b0.getSize(new THREE.Vector3());
-    const length=Math.max(s.z,s.x);
-    if(length>0) carModel.scale.setScalar(3.2/length);
-    carModel.updateMatrixWorld(true);
-    const b1=new THREE.Box3().setFromObject(carModel),ctr=b1.getCenter(new THREE.Vector3());
-    carModel.position.x-=ctr.x;carModel.position.z-=ctr.z;carModel.position.y-=b1.min.y;
-    carModel.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
-    carGroup.add(carModel);
-  },undefined,()=>{carGroup.add(makeFallbackCar())});
+  // Use our optimized SUV directly on mobile so the car looks consistent
+  // instead of depending on a heavy external GLB.
+  carModel=makeFallbackCar();
+  carGroup.add(carModel);
 }
 loadCar();
 
