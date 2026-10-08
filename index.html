@@ -149,6 +149,7 @@ canvas.addEventListener("pointerdown",e=>{look=true;lastX=e.clientX;lastY=e.clie
 function move(){if(driving){updateCar();return;} let x=joyX,y=joyY;if(keys.w)y=-1;if(keys.s)y=1;if(keys.a)x=-1;if(keys.d)x=1;const input=new THREE.Vector2(x,y);if(input.length()>1)input.normalize();const speed=runHeld?.20:.13;const forward=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw));const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));player.position.addScaledVector(forward,-input.y*speed);player.position.addScaledVector(right,input.x*speed);const moving=input.length()>.05;walkAmount=THREE.MathUtils.lerp(walkAmount,moving?1:0,.18);if(moving){player.rotation.y=Math.atan2(input.x,-input.y)+yaw;walkTime+=.22}}
 function animatePlayer(){if(!playerReady||!playerModel)return;const bones={};playerModel.traverse(o=>{if(o.isBone)bones[o.name]=o});const s=Math.sin(walkTime)*.65*walkAmount,a=Math.sin(walkTime)*.42*walkAmount;if(bones.thigh_l)bones.thigh_l.rotation.x=s;if(bones.thigh_r)bones.thigh_r.rotation.x=-s;if(bones.upperarm_l)bones.upperarm_l.rotation.z=-a;if(bones.upperarm_r)bones.upperarm_r.rotation.z=a}
 function cameraFollow(){const targetObj=driving?carGroup:player;const dist=driving?7.5:6.2,height=driving?2.9:2.6+pitch*1.6;camera.position.set(targetObj.position.x+Math.sin(yaw)*dist,targetObj.position.y+height,targetObj.position.z+Math.cos(yaw)*dist);const target=targetObj.position.clone();target.y+=driving?1.0:1.15;camera.lookAt(target)}
+const carBtn=document.getElementById("car"),runBtn=document.getElementById("run"),driveHint=document.getElementById("driveHint"),speedHud=document.getElementById("speedHud");
 function loop(){
   move();animatePlayer();cameraFollow();
   if(!driving){
@@ -161,7 +162,7 @@ function loop(){
 }loop();
 addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 const phone=document.getElementById("phone");document.getElementById("phoneOpen").onclick=()=>phone.classList.add("show");document.getElementById("phoneClose").onclick=()=>phone.classList.remove("show");
-const carBtn=document.getElementById("car"),runBtn=document.getElementById("run"),driveHint=document.getElementById("driveHint"),speedHud=document.getElementById("speedHud");
+
 runBtn.addEventListener("pointerdown",()=>runHeld=true);runBtn.addEventListener("pointerup",()=>runHeld=false);runBtn.addEventListener("pointercancel",()=>runHeld=false);runBtn.addEventListener("pointerleave",()=>runHeld=false);
 carBtn.onclick=()=>{
   const dx=player.position.x-carGroup.position.x,dz=player.position.z-carGroup.position.z;
