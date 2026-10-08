@@ -34,9 +34,31 @@ addEventListener("error",e=>setDebug("JAVASCRIPT ERROR — "+(e.message||"unknow
 addEventListener("unhandledrejection",e=>setDebug("ERROR — "+(e.reason?.message||e.reason||"unknown"),true));
 
 const canvas=document.getElementById("scene");
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);
-renderer.shadowMap.enabled=true;
+
+let renderer;
+try{
+  // Mobile-friendly WebGL setup: avoid exhausting the browser's GPU/context limits.
+  const glOptions={
+    alpha:false,
+    antialias:false,
+    depth:true,
+    stencil:false,
+    powerPreference:"low-power",
+    preserveDrawingBuffer:false
+  };
+  let gl=null;
+  try{ gl=canvas.getContext("webgl2",glOptions); }catch(e){}
+  if(!gl){ try{ gl=canvas.getContext("webgl",glOptions); }catch(e){} }
+  if(!gl) throw new Error("WebGL is unavailable on this device/browser");
+  renderer=new THREE.WebGLRenderer({canvas,context:gl,antialias:false,powerPreference:"low-power"});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.25));
+  renderer.setSize(innerWidth,innerHeight,false);
+  renderer.shadowMap.enabled=true;
+  renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+}catch(err){
+  setDebug("3D ENGINE ERROR — "+(err.message||"WebGL context failed"),true);
+  throw err;
+}
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x8fc9ef);scene.fog=new THREE.Fog(0x8fc9ef,70,260);
 const camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.1,500);
 scene.add(new THREE.HemisphereLight(0xcfe9ff,0x4b3d2b,1.8));
